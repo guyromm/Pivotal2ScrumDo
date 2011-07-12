@@ -1,0 +1,41 @@
+This python script takes 3 commandline arguments: 
+1. PivotalTracker .CSV export filename 
+2. filename prefix for .XLS output
+3. Desired operation. possible operations are:
+   a. 'writexls': takes the pivotaltracker.com .CSV export and outputs a series of .XLS Excel files meant to be imported for each distinct iteration in ScrumDo. this can be used with both a local ScrumDo install as well as the hosted service offered on scrumdo.com.
+   b. 'sprints': outputs a listing of sprints deduced from the Pivotal export. and, if database is configured, attempts to update the start/end dates for sprints carrying matching names in the scrumdo database.
+   c. 'printmembers': prints a digest of members listed in the exported stories. it is up for the user to create accounts for all these users so that their comments and story bindings could be tied to them.
+   d. 'insextra': directly accesses the scrumdo database and injects story tasks, users/creators and comments. stories/users that were not succesfully located are complained about in stdout.
+
+configuration is stored in p2sd.json and is quite self explanatory. currently it sets script output debug level as well as database settings for the part that writes directly to database.
+
+
+due to the script's incomplete and fragmented nature, here are the rough steps for moving pivotal data into scrumdo:
+
+* create all participating users manually in scrumdo. users are matched by concat(first_name,' ',last_name) so be sure to adjust them in auth_user
+
+* create all nescessary iterations manually in scrumdo
+
+* dump pivotal .csv via Project -> Export CSV at pivotaltracker.com
+
+* before every import attempt:
+$ echo 'delete from projects_story;' | mysql -u$MYSQLUSER -P$MYSqLPORT -h$MYSQLHOST $SCRUMDODB
+
+* this generates the .xls files from the pivotal dump
+./p2sd.py ~/pivotalproject_...csv scg writexls
+
+* write a configuration into p2sd.json with the scrumdo database access tools
+
+* manually create the iteration definitions in the scrumdo database
+
+* update the sprint dates, yikes.
+./p2sd.py ~/pivotalproject_...csv scg sprints
+
+* get a list of user accounts to create in order to succesfully import all user context info, and create them in scrumdo
+./p2sd.py ~/pivotalproject_...csv scg printmembers
+
+* do the import in scrumdo via the web interface by going through each iteration and clicking the 'Import Iteration' link on the right hand menu under 'Iteration Tools'.
+
+* this inserts comments,tasks straight into the db & set story assignees
+./p2sd.py ~/pivotalproject_...csv someprefix insextra
+

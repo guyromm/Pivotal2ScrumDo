@@ -1,0 +1,7 @@
+*.xls
+*~
+*.pyc
+*.sql.gz
+*.sql
+p2sd.json
+.~*
