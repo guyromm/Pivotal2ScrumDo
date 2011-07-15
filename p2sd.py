@@ -21,7 +21,16 @@ coltrans = {'Id':'Story ID'
             ,'Story Type':'Tags'
             ,'URL':'Pivotal URL'
             }
-statustrans = {'accepted':'Done','finished':'Reviewing','started':'Doing','unstarted':'Todo','unscheduled':'Todo'}
+#because scrumdo does not have a representation of some extra pivotal states we'll write them in as labels
+statustrans = {
+    'unscheduled':'Todo' #?
+    ,'unstarted':'Todo'
+    ,'started':'Doing'
+    ,'finished':'Reviewing' # review by scrum-master
+    ,'delivered':'Reviewing' # review by product-owner
+    ,'accepted':'Done'}
+statuses_add_labels = ['unscheduled','finished','delivered']
+
 ignore_fields=['Labels']
 assign_fields=['Iteration','Created at','Accepted at','Deadline','Requested By']
 scursor = open(pfn,'r')
@@ -46,6 +55,7 @@ for row in csvcursor:
         continue
     idx=0
     orow = {'tasks':[],'comments':[]}
+    addlabels=[]
     for scolval in row:
         scolname = pivotal_cols[idx]
         idx+=1
@@ -56,7 +66,9 @@ for row in csvcursor:
             else:
                 orow['Points']=None
         elif scolname=='Current State':
-            orow['Status']=statustrans[scolval]
+            orow['Status']=scolval #statustrans[scolval]
+            if scolval in statuses_add_labels:
+                addlabels.append(scolval)
         elif scolname in coltrans:
             orow[coltrans[scolname]]=scolval
         elif scolname in ['Iteration Start','Iteration End']:
@@ -89,6 +101,8 @@ for row in csvcursor:
     if orow['Iteration'] not in iterations:
         iterations[orow['Iteration']]=[]
         iterations_cnt[orow['Iteration']]=0
+    if len(addlabels):
+        orow['Tags']+=','+(','.join(addlabels))
 
     iterations[orow['Iteration']].append(orow)
     iterations_cnt[orow['Iteration']]+=1
@@ -142,6 +156,8 @@ elif operation=='writexls':
                 #log.info('about to write %s,%s'%(y,x))
                 if type(story[k])==list:
                     wr = json.dumps(story[k])
+                elif k=='Status':
+                    wr = statustrans[story[k]]
                 else:
                     wr = story[k]
                 ws.write(y,x,wr)
