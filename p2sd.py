@@ -28,8 +28,9 @@ statustrans = {
     ,'started':'Doing'
     ,'finished':'Reviewing' # review by scrum-master
     ,'delivered':'Reviewing' # review by product-owner
+    ,'rejected':'Reviewing'
     ,'accepted':'Done'}
-statuses_add_labels = ['unscheduled','finished','delivered']
+statuses_add_labels = ['unscheduled','finished','delivered','rejected']
 
 ignore_fields=['Labels']
 assign_fields=['Iteration','Created at','Accepted at','Deadline','Requested By']
@@ -169,7 +170,7 @@ elif operation=='writexls':
             inn = iteration_id
         ofn = '%s_%s.xls'%(opf,inn)
         wb.save(ofn) 
-        log.info('saved %s with %s rows'%(ofn,y))
+        print('saved %s with %s rows'%(ofn,y))
 elif operation=='sprints':
 
     for itid,itdates in iteration_dates.items():
