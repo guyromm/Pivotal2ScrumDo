@@ -196,6 +196,7 @@ elif operation=='printmembers':
 elif operation=='insextra':
     notfound={'stories_times':0,'users_times':0,'stories':[],'users':[]}
     done={'tasks':0,'assigned':0,'comments':0}
+    projectid=1
     for iteration_id,stories in iterations.items():
         for story in stories:
             #try to find the story
@@ -209,6 +210,25 @@ elif operation=='insextra':
                 continue
             assert len(storyids)==1
             storyid = int(storyids[0][0])
+            #write pivotal storyid tags
+            #get the tag id
+            tagname = 'pivotal id %s'%story['Story ID']
+            tagselqry = "select * from projects_storytag where project_id=%s and name=%s"
+            tagselargs = (projectid,tagname)
+            c.execute(tagselqry,tagselargs)
+            tags = c.fetchall()
+            if len(tags):
+                tagid = tags[0][0]
+            else:
+                res = c.execute("insert into projects_storytag (project_id,name) values(%s,%s)",tagselargs)
+                c.execute(tagselqry,tagselargs)
+                tagid = c.fetchone()[0]
+            #make sure tag is tied to our story
+            c.execute("select * from projects_storytagging where story_id=%s and tag_id=%s",(storyid,tagid))
+            stags = c.fetchall()
+            if not len(stags):
+                c.execute("insert into projects_storytagging (story_id,tag_id) values(%s,%s)",(storyid,tagid))
+                log.info('inserting storytag for story %s to tag %s'%(storyid,tagid))
             #write tasks
             if len(story['tasks']):
                 c.execute("delete from projects_task where story_id=%s",storyid)
